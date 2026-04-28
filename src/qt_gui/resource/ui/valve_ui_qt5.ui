@@ -1,0 +1,945 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1360</width>
+    <height>900</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1180</width>
+    <height>780</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Intelligent Valve Operation System</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+QMainWindow, QWidget#centralwidget{
+    background-color:#eef5fb;
+    font-family:&quot;Microsoft YaHei&quot;, &quot;Segoe UI&quot;, Arial;
+    color:#102a43;
+}
+QFrame#headerFrame{
+    background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #0b2d57, stop:0.55 #0f5f9f, stop:1 #1e88d1);
+    border-radius:14px;
+}
+QLabel#logoLabel{
+    background-color:rgba(255,255,255,38);
+    border:1px solid rgba(255,255,255,80);
+    border-radius:18px;
+    color:white;
+    font-size:26px;
+    font-weight:700;
+}
+QLabel#titleLabel{
+    color:white;
+    font-size:30px;
+    font-weight:700;
+}
+QLabel#subtitleLabel{
+    color:#d9ecff;
+    font-size:15px;
+}
+QLabel#systemStatusLabel{
+    color:white;
+    background-color:rgba(255,255,255,35);
+    border:1px solid rgba(255,255,255,75);
+    border-radius:12px;
+    padding:10px 18px;
+    font-size:17px;
+    font-weight:700;
+}
+QFrame.card{
+    background-color:#ffffff;
+    border:1px solid #d7e6f5;
+    border-radius:14px;
+}
+QFrame#cameraPanel, QFrame#rightPanel{
+    background-color:#ffffff;
+    border:1px solid #d5e7f8;
+    border-radius:16px;
+}
+QLabel.sectionTitle{
+    color:#0c3b6e;
+    font-size:20px;
+    font-weight:700;
+}
+QLabel.hintLabel{
+    color:#6b7c93;
+    font-size:13px;
+}
+QPushButton{
+    border:none;
+    border-radius:9px;
+    padding:9px 18px;
+    font-size:15px;
+    font-weight:600;
+    color:white;
+    background-color:#2f80c7;
+}
+QPushButton:hover{ background-color:#1f6fb8; }
+QPushButton:pressed{ background-color:#155a96; }
+QPushButton#stopCameraButton{
+    background-color:#52687d;
+}
+QPushButton#stopCameraButton:hover{ background-color:#44576b; }
+QPushButton#connectArmButton{
+    background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #26a8e8, stop:1 #1c55e8);
+    min-height:28px;
+}
+QPushButton#rotateValveButton{
+    background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #1fb6ff, stop:1 #6c3cff);
+    border-radius:14px;
+    min-height:54px;
+    font-size:22px;
+    font-weight:800;
+}
+QComboBox{
+    background-color:#ffffff;
+    border:1px solid #bfd6ee;
+    border-radius:8px;
+    padding:7px 12px;
+    font-size:15px;
+    min-height:24px;
+}
+QLineEdit, QLabel.valueBox, QLabel.commandBox{
+    background-color:#f6faff;
+    border:1px solid #c9dff3;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:15px;
+}
+QLabel.valueBox{
+    color:#0f2742;
+    font-weight:700;
+}
+QLabel#cameraViewLabel{
+    background-color:#07111d;
+    color:#eaf5ff;
+    border:2px solid #143b63;
+    border-radius:14px;
+    font-size:25px;
+    font-weight:700;
+}
+QFrame.statusCard{
+    background-color:#fbfdff;
+    border:1px solid #d4e6f8;
+    border-radius:18px;
+}
+QLabel.statusIcon{
+    background-color:#eaf4ff;
+    border:1px solid #cde5ff;
+    border-radius:20px;
+    color:#1f74d1;
+    font-size:22px;
+    font-weight:700;
+}
+QLabel.statusMain{
+    color:#073b72;
+    font-size:22px;
+    font-weight:800;
+}
+QLabel.statusSub{
+    color:#708399;
+    font-size:12px;
+}
+QTextEdit#commandLogEdit{
+    background-color:#f7fbff;
+    border:1px solid #cfe2f5;
+    border-radius:10px;
+    color:#5d7188;
+    font-size:14px;
+    padding:8px;
+}
+QLabel.fieldLabel{
+    color:#15395f;
+    font-size:15px;
+    font-weight:650;
+}
+   </string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="mainVerticalLayout">
+    <property name="spacing">
+     <number>16</number>
+    </property>
+    <property name="leftMargin">
+     <number>22</number>
+    </property>
+    <property name="topMargin">
+     <number>18</number>
+    </property>
+    <property name="rightMargin">
+     <number>22</number>
+    </property>
+    <property name="bottomMargin">
+     <number>18</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="headerFrame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>106</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <layout class="QHBoxLayout" name="headerLayout">
+       <property name="spacing">
+        <number>16</number>
+       </property>
+       <property name="leftMargin">
+        <number>26</number>
+       </property>
+       <property name="topMargin">
+        <number>16</number>
+       </property>
+       <property name="rightMargin">
+        <number>26</number>
+       </property>
+       <property name="bottomMargin">
+        <number>16</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="logoLabel">
+         <property name="minimumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>64</width>
+           <height>64</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>AI</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="titleLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="titleLabel">
+           <property name="text">
+            <string>机械臂阀门识别与定位控制系统</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="subtitleLabel">
+           <property name="text">
+            <string>RGB-D Vision · Valve Localization · Robotic Arm Command Monitoring</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="headerSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="systemStatusLabel">
+         <property name="text">
+          <string>● 系统状态：待连接</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="contentLayout">
+      <property name="spacing">
+       <number>16</number>
+      </property>
+      <item>
+       <widget class="QFrame" name="cameraPanel">
+        <layout class="QVBoxLayout" name="cameraPanelLayout">
+         <property name="spacing">
+          <number>14</number>
+         </property>
+         <property name="leftMargin">
+          <number>18</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>18</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="cameraToolbarCard">
+           <property name="class" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QHBoxLayout" name="cameraToolbarLayout">
+            <property name="spacing">
+             <number>12</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>12</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>12</number>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="cameraTitleLayout">
+              <item>
+               <widget class="QLabel" name="cameraTitleLabel">
+                <property name="text">
+                 <string>图像显示区域</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>sectionTitle</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="cameraHintLabel">
+                <property name="text">
+                 <string>支持 RGB 图像与深度图切换显示</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>hintLabel</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="toolbarSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QComboBox" name="imageModeComboBox">
+              <item>
+               <property name="text">
+                <string>RGB 图像</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>深度图</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="startCameraButton">
+              <property name="text">
+               <string>启动相机</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="stopCameraButton">
+              <property name="text">
+               <string>停止相机</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="cameraViewLabel">
+           <property name="minimumSize">
+            <size>
+             <width>720</width>
+             <height>430</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>◎\nRGB Camera View</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="statusCardsLayout">
+           <property name="spacing">
+            <number>14</number>
+           </property>
+           <item>
+            <widget class="QFrame" name="fpsCard">
+             <property name="class" stdset="0">
+              <string>statusCard</string>
+             </property>
+             <layout class="QHBoxLayout" name="fpsLayout">
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>12</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>12</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="fpsIcon">
+                <property name="minimumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>▣</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="class" stdset="0">
+                 <string>statusIcon</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="fpsTextLayout">
+                <item>
+                 <widget class="QLabel" name="fpsValueLabel">
+                  <property name="text">
+                   <string>-- FPS</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusMain</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="fpsDescLabel">
+                  <property name="text">
+                   <string>相机帧率</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusSub</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="modelCard">
+             <property name="class" stdset="0">
+              <string>statusCard</string>
+             </property>
+             <layout class="QHBoxLayout" name="modelLayout">
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>12</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>12</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="modelIcon">
+                <property name="minimumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>◇</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="class" stdset="0">
+                 <string>statusIcon</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="modelTextLayout">
+                <item>
+                 <widget class="QLabel" name="modelValueLabel">
+                  <property name="text">
+                   <string>YOLO11</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusMain</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="modelDescLabel">
+                  <property name="text">
+                   <string>识别模型</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusSub</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QFrame" name="cameraStatusCard">
+             <property name="class" stdset="0">
+              <string>statusCard</string>
+             </property>
+             <layout class="QHBoxLayout" name="cameraStatusLayout">
+              <property name="leftMargin">
+               <number>16</number>
+              </property>
+              <property name="topMargin">
+               <number>12</number>
+              </property>
+              <property name="rightMargin">
+               <number>16</number>
+              </property>
+              <property name="bottomMargin">
+               <number>12</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="cameraStatusIcon">
+                <property name="minimumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>●</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="class" stdset="0">
+                 <string>statusIcon</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="cameraStatusTextLayout">
+                <item>
+                 <widget class="QLabel" name="cameraStatusValueLabel">
+                  <property name="text">
+                   <string>未启动</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusMain</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="cameraStatusDescLabel">
+                  <property name="text">
+                   <string>相机状态</string>
+                  </property>
+                  <property name="class" stdset="0">
+                   <string>statusSub</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="rotateValveButton">
+           <property name="text">
+            <string>一键旋阀</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QFrame" name="rightPanel">
+        <property name="minimumSize">
+         <size>
+          <width>445</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>520</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <layout class="QVBoxLayout" name="rightLayout">
+         <property name="spacing">
+          <number>14</number>
+         </property>
+         <property name="leftMargin">
+          <number>16</number>
+         </property>
+         <property name="topMargin">
+          <number>18</number>
+         </property>
+         <property name="rightMargin">
+          <number>16</number>
+         </property>
+         <property name="bottomMargin">
+          <number>18</number>
+         </property>
+         <item>
+          <widget class="QFrame" name="armConnectCard">
+           <property name="class" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QVBoxLayout" name="armConnectLayout">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>14</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>14</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="armTitleLabel">
+              <property name="text">
+               <string>机械臂连接信息</string>
+              </property>
+              <property name="class" stdset="0">
+               <string>sectionTitle</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="armFormLayout">
+              <property name="labelAlignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="horizontalSpacing">
+               <number>14</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>9</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="ipLabel">
+                <property name="text">
+                 <string>机械臂 IP：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="armIpLineEdit">
+                <property name="text">
+                 <string>192.168.0.200</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="portLabel">
+                <property name="text">
+                 <string>端口：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="armPortLineEdit">
+                <property name="text">
+                 <string>2090</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QPushButton" name="connectArmButton">
+              <property name="text">
+               <string>连接机械臂</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="valveDataCard">
+           <property name="class" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QVBoxLayout" name="valveDataLayout">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>14</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>14</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="valveTitleLabel">
+              <property name="text">
+               <string>阀门位置数据</string>
+              </property>
+              <property name="class" stdset="0">
+               <string>sectionTitle</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="valveFormLayout">
+              <property name="labelAlignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="horizontalSpacing">
+               <number>14</number>
+              </property>
+              <property name="verticalSpacing">
+               <number>10</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="xLabel">
+                <property name="text">
+                 <string>X 坐标：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="xValueLabel">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="class" stdset="0">
+                 <string>valueBox</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="yLabel">
+                <property name="text">
+                 <string>Y 坐标：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLabel" name="yValueLabel">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="class" stdset="0">
+                 <string>valueBox</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="zLabel">
+                <property name="text">
+                 <string>Z 深度：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLabel" name="zValueLabel">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="class" stdset="0">
+                 <string>valueBox</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="confLabel">
+                <property name="text">
+                 <string>识别置信度：</string>
+                </property>
+                <property name="class" stdset="0">
+                 <string>fieldLabel</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLabel" name="confidenceValueLabel">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="class" stdset="0">
+                 <string>valueBox</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QFrame" name="commandCard">
+           <property name="class" stdset="0">
+            <string>card</string>
+           </property>
+           <layout class="QVBoxLayout" name="commandLayout">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <property name="leftMargin">
+             <number>16</number>
+            </property>
+            <property name="topMargin">
+             <number>14</number>
+            </property>
+            <property name="rightMargin">
+             <number>16</number>
+            </property>
+            <property name="bottomMargin">
+             <number>14</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="commandTitleLabel">
+              <property name="text">
+               <string>当前执行命令</string>
+              </property>
+              <property name="class" stdset="0">
+               <string>sectionTitle</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="currentCommandLabel">
+              <property name="text">
+               <string>暂无执行命令</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="class" stdset="0">
+               <string>commandBox</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="commandLogEdit">
+              <property name="placeholderText">
+               <string>机械臂指令日志将在此显示...</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
