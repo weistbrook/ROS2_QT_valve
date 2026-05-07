@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'qt_gui'
+package_name = 'valve_qt_gui'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'gui_node = qt_gui.gui_node:main'
+            'gui_node = valve_qt_gui.gui_node:main'
         ],
     },
 )

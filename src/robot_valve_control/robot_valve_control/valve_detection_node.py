@@ -12,7 +12,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 # 建议把 msg 文件命名为 ValveCommand.msg，然后这样导入
-from valve_interfaces.msg import ValveCommand
+from valve_interfaces.msg import ValveCommand, ValveVision
 
 # 如果 judge_proper 在 utility.py 里，就改成：from utility import judge_proper
 #from utility import judge_proper
@@ -38,6 +38,7 @@ class ValveDetectionNode(Node):
         self.declare_parameter('rgb_topic', '/camera/color/image_raw')
         self.declare_parameter('depth_topic', '/camera/depth/image_raw')
         self.declare_parameter('command_topic', '/valve/command')
+        self.declare_parameter('vision_topic', '/valve/vision')
         self.declare_parameter('show_image', True)
 
         model_path = self.get_parameter('model_path').value
@@ -45,6 +46,7 @@ class ValveDetectionNode(Node):
         rgb_topic = self.get_parameter('rgb_topic').value
         depth_topic = self.get_parameter('depth_topic').value
         command_topic = self.get_parameter('command_topic').value
+        vision_topic = self.get_parameter('vision_topic').value
 
         self.model = YOLO(model_path, task='detect')
         self.names = self.model.names
@@ -55,11 +57,12 @@ class ValveDetectionNode(Node):
         self.camera_info = self.load_camera_info(camera_info_yaml)
 
         self.command_pub = self.create_publisher(ValveCommand, command_topic, 10)
+        self.vision_pub = self.create_publisher(ValveVision, vision_topic, 10)
 
         self.create_subscription(Image, rgb_topic, self.image_callback, 1)
         self.create_subscription(Image, depth_topic, self.depth_callback, 1)
 
-        self.get_logger().info('ValveDetectionNode started. Publishing command only; robot motion is separated.')
+        self.get_logger().info('ValveDetectionNode started. Publishing command and vision topics; robot motion is separated.')
 
     def depth_callback(self, msg):
         try:
@@ -80,6 +83,7 @@ class ValveDetectionNode(Node):
 
             det = self.run_yolo(frame)
             if det is None or len(det) == 0:
+                self.publish_vision(frame)
                 if self.get_parameter('show_image').value:
                     cv2.imshow('YOLOv11 Detection', frame)
                     cv2.waitKey(1)
@@ -92,12 +96,30 @@ class ValveDetectionNode(Node):
             if command is not None and command.valid:
                 self.command_pub.publish(command)
 
+            self.publish_vision(frame)
+
             if self.get_parameter('show_image').value:
                 cv2.imshow('YOLOv11 Detection', frame)
                 cv2.waitKey(1)
 
         except Exception as e:
             self.get_logger().error(f'图像处理出错: {e}')
+
+    def publish_vision(self, processed_bgr_frame):
+        if self.depth_image is None:
+            return
+
+        try:
+            msg = ValveVision()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.frame_id = 'camera_color_optical_frame'
+            msg.rgb_image = self.bridge.cv2_to_imgmsg(processed_bgr_frame, encoding='bgr8')
+            msg.depth_image = self.bridge.cv2_to_imgmsg(self.depth_image)
+            msg.rgb_image.header = msg.header
+            msg.depth_image.header = msg.header
+            self.vision_pub.publish(msg)
+        except Exception as e:
+            self.get_logger().warn(f'图像消息发布失败: {e}')
 
     def judge_proper(self, roi):
         """
