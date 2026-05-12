@@ -14,12 +14,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1360, 900)
-        MainWindow.setMinimumSize(QtCore.QSize(1180, 780))
+        MainWindow.resize(1280, 720)
+        MainWindow.setMinimumSize(QtCore.QSize(1160, 720))
         MainWindow.setStyleSheet("\n"
 "QMainWindow, QWidget#centralwidget{\n"
 "    background-color:#eef5fb;\n"
-"    font-family:\"Microsoft YaHei\", \"Segoe UI\", Arial;\n"
+"    font-family:\"Noto Sans CJK SC\", \"WenQuanYi Micro Hei\", \"Microsoft YaHei\", \"SimHei\", \"Segoe UI\", Arial;\n"
 "    color:#102a43;\n"
 "}\n"
 "QFrame#headerFrame{\n"
@@ -36,7 +36,7 @@ class Ui_MainWindow(object):
 "}\n"
 "QLabel#titleLabel{\n"
 "    color:white;\n"
-"    font-size:30px;\n"
+"    font-size:24px;\n"
 "    font-weight:700;\n"
 "}\n"
 "QLabel#subtitleLabel{\n"
@@ -64,7 +64,7 @@ class Ui_MainWindow(object):
 "}\n"
 "QLabel.sectionTitle{\n"
 "    color:#0c3b6e;\n"
-"    font-size:20px;\n"
+"    font-size:17px;\n"
 "    font-weight:700;\n"
 "}\n"
 "QLabel.hintLabel{\n"
@@ -90,6 +90,11 @@ class Ui_MainWindow(object):
 "    background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #26a8e8, stop:1 #1c55e8);\n"
 "    min-height:28px;\n"
 "}\n"
+"QPushButton#stopArmButton{\n"
+"    background-color:#d9534f;\n"
+"    min-height:28px;\n"
+"}\n"
+"QPushButton#stopArmButton:hover{ background-color:#c64541; }\n"
 "QPushButton#rotateValveButton{\n"
 "    background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #1fb6ff, stop:1 #6c3cff);\n"
 "    border-radius:14px;\n"
@@ -121,7 +126,7 @@ class Ui_MainWindow(object):
 "    color:#eaf5ff;\n"
 "    border:2px solid #143b63;\n"
 "    border-radius:14px;\n"
-"    font-size:25px;\n"
+"    font-size:22px;\n"
 "    font-weight:700;\n"
 "}\n"
 "QFrame.statusCard{\n"
@@ -139,7 +144,7 @@ class Ui_MainWindow(object):
 "}\n"
 "QLabel.statusMain{\n"
 "    color:#073b72;\n"
-"    font-size:22px;\n"
+"    font-size:18px;\n"
 "    font-weight:800;\n"
 "}\n"
 "QLabel.statusSub{\n"
@@ -163,11 +168,11 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.mainVerticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
-        self.mainVerticalLayout.setContentsMargins(22, 18, 22, 18)
-        self.mainVerticalLayout.setSpacing(16)
+        self.mainVerticalLayout.setContentsMargins(14, 10, 14, 10)
+        self.mainVerticalLayout.setSpacing(10)
         self.mainVerticalLayout.setObjectName("mainVerticalLayout")
         self.headerFrame = QtWidgets.QFrame(self.centralwidget)
-        self.headerFrame.setMinimumSize(QtCore.QSize(0, 106))
+        self.headerFrame.setMinimumSize(QtCore.QSize(0, 82))
         self.headerFrame.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.headerFrame.setObjectName("headerFrame")
         self.headerLayout = QtWidgets.QHBoxLayout(self.headerFrame)
@@ -203,8 +208,8 @@ class Ui_MainWindow(object):
         self.cameraPanel = QtWidgets.QFrame(self.centralwidget)
         self.cameraPanel.setObjectName("cameraPanel")
         self.cameraPanelLayout = QtWidgets.QVBoxLayout(self.cameraPanel)
-        self.cameraPanelLayout.setContentsMargins(18, 18, 18, 18)
-        self.cameraPanelLayout.setSpacing(14)
+        self.cameraPanelLayout.setContentsMargins(14, 14, 14, 14)
+        self.cameraPanelLayout.setSpacing(10)
         self.cameraPanelLayout.setObjectName("cameraPanelLayout")
         self.cameraToolbarCard = QtWidgets.QFrame(self.cameraPanel)
         self.cameraToolbarCard.setObjectName("cameraToolbarCard")
@@ -236,7 +241,8 @@ class Ui_MainWindow(object):
         self.cameraToolbarLayout.addWidget(self.stopCameraButton)
         self.cameraPanelLayout.addWidget(self.cameraToolbarCard)
         self.cameraViewLabel = QtWidgets.QLabel(self.cameraPanel)
-        self.cameraViewLabel.setMinimumSize(QtCore.QSize(720, 430))
+        self.cameraViewLabel.setMinimumSize(QtCore.QSize(600, 320))
+        self.cameraViewLabel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.cameraViewLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.cameraViewLabel.setObjectName("cameraViewLabel")
         self.cameraPanelLayout.addWidget(self.cameraViewLabel)
@@ -312,8 +318,8 @@ class Ui_MainWindow(object):
         self.cameraPanelLayout.addWidget(self.rotateValveButton)
         self.contentLayout.addWidget(self.cameraPanel)
         self.rightPanel = QtWidgets.QFrame(self.centralwidget)
-        self.rightPanel.setMinimumSize(QtCore.QSize(445, 0))
-        self.rightPanel.setMaximumSize(QtCore.QSize(520, 16777215))
+        self.rightPanel.setMinimumSize(QtCore.QSize(380, 0))
+        self.rightPanel.setMaximumSize(QtCore.QSize(440, 16777215))
         self.rightPanel.setObjectName("rightPanel")
         self.rightLayout = QtWidgets.QVBoxLayout(self.rightPanel)
         self.rightLayout.setContentsMargins(16, 18, 16, 18)
@@ -349,6 +355,9 @@ class Ui_MainWindow(object):
         self.connectArmButton = QtWidgets.QPushButton(self.armConnectCard)
         self.connectArmButton.setObjectName("connectArmButton")
         self.armConnectLayout.addWidget(self.connectArmButton)
+        self.stopArmButton = QtWidgets.QPushButton(self.armConnectCard)
+        self.stopArmButton.setObjectName("stopArmButton")
+        self.armConnectLayout.addWidget(self.stopArmButton)
         self.rightLayout.addWidget(self.armConnectCard)
         self.valveDataCard = QtWidgets.QFrame(self.rightPanel)
         self.valveDataCard.setObjectName("valveDataCard")
@@ -467,6 +476,7 @@ class Ui_MainWindow(object):
         self.portLabel.setProperty("class", _translate("MainWindow", "fieldLabel"))
         self.armPortLineEdit.setText(_translate("MainWindow", "2090"))
         self.connectArmButton.setText(_translate("MainWindow", "连接机械臂"))
+        self.stopArmButton.setText(_translate("MainWindow", "关闭机械臂"))
         self.valveDataCard.setProperty("class", _translate("MainWindow", "card"))
         self.valveTitleLabel.setText(_translate("MainWindow", "阀门位置数据"))
         self.valveTitleLabel.setProperty("class", _translate("MainWindow", "sectionTitle"))

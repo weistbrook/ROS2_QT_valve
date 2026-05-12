@@ -2,13 +2,15 @@ import os
 import signal
 import subprocess
 import sys
+import time
+from collections import deque
 
 import cv2
 import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from PyQt5.QtCore import QProcess, QTimer, Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QFont, QFontDatabase, QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from rclpy.node import Node
 from rclpy.utilities import remove_ros_args
@@ -62,6 +64,8 @@ class Ros2GuiNode(Node):
 class GUINode(QMainWindow):
     RGB_MODE_INDEX = 0
     DEPTH_MODE_INDEX = 1
+    FPS_WINDOW_SECONDS = 2.0
+    FPS_WINDOW_MAX_FRAMES = 60
 
     def __init__(self, ros_node, parent=None):
         super().__init__(parent)
@@ -73,6 +77,7 @@ class GUINode(QMainWindow):
         self.last_rgb_frame = None
         self.last_depth_frame = None
         self.received_frame_count = 0
+        self.frame_timestamps = deque(maxlen=self.FPS_WINDOW_MAX_FRAMES)
         self._stopping_detector = False
         self._stopping_arm = False
         self.arm_connected = False
@@ -93,12 +98,13 @@ class GUINode(QMainWindow):
         self.ui.startCameraButton.clicked.connect(self.start_camera)
         self.ui.stopCameraButton.clicked.connect(self.stop_camera)
         self.ui.connectArmButton.clicked.connect(self.connect_arm)
+        self.ui.stopArmButton.clicked.connect(self.stop_arm)
         self.ui.rotateValveButton.clicked.connect(self.enable_arm_motion)
         self.ui.imageModeComboBox.currentIndexChanged.connect(self.update_camera_view)
 
         self._reset_valve_data()
         self._set_current_command('none')
-        self.ui.fpsValueLabel.setText('10 FPS')
+        self._reset_fps()
         self._set_arm_process_running(False)
         self._set_arm_connected(False)
         self._set_arm_motion_enabled(False)
@@ -116,6 +122,7 @@ class GUINode(QMainWindow):
         self.last_rgb_frame = rgb_frame.copy()
         self.last_depth_frame = depth_frame.copy()
         self.received_frame_count += 1
+        self._update_fps()
 
         if self.detector_process.state() != QProcess.NotRunning:
             self._set_camera_running(True)
@@ -158,6 +165,7 @@ class GUINode(QMainWindow):
         self.last_rgb_frame = None
         self.last_depth_frame = None
         self.received_frame_count = 0
+        self._reset_fps()
         self._reset_valve_data()
         self._set_current_command('none')
         self._set_placeholder('正在启动图像处理节点...')
@@ -263,6 +271,7 @@ class GUINode(QMainWindow):
         self.last_rgb_frame = None
         self.last_depth_frame = None
         self.received_frame_count = 0
+        self._reset_fps()
         self._reset_valve_data()
         self._set_current_command('none')
 
@@ -337,12 +346,14 @@ class GUINode(QMainWindow):
 
     def _on_detector_finished(self):
         self._set_camera_running(False)
+        self._reset_fps()
         if not self._stopping_detector:
             self._set_placeholder('图像处理节点已退出')
             self.ui.commandLogEdit.append('[Vision] 图像处理节点已退出。')
 
     def _on_detector_error(self, error):
         self._set_camera_running(False)
+        self._reset_fps()
         self.ui.commandLogEdit.append(f'[Vision] 图像处理节点进程错误: {error}')
 
     def _append_process_log(self):
@@ -380,6 +391,7 @@ class GUINode(QMainWindow):
 
     def _set_arm_process_running(self, running):
         self.ui.connectArmButton.setEnabled(not running)
+        self.ui.stopArmButton.setEnabled(running)
         self.ui.armIpLineEdit.setEnabled(not running)
         self.ui.armPortLineEdit.setEnabled(not running)
         if running:
@@ -443,6 +455,31 @@ class GUINode(QMainWindow):
         self.ui.cameraViewLabel.setPixmap(QPixmap())
         self.ui.cameraViewLabel.setText(text)
 
+    def _reset_fps(self):
+        self.frame_timestamps.clear()
+        self.ui.fpsValueLabel.setText('-- FPS')
+
+    def _update_fps(self):
+        now = time.monotonic()
+        self.frame_timestamps.append(now)
+        while (
+            len(self.frame_timestamps) > 1
+            and now - self.frame_timestamps[0] > self.FPS_WINDOW_SECONDS
+        ):
+            self.frame_timestamps.popleft()
+
+        if len(self.frame_timestamps) < 2:
+            self.ui.fpsValueLabel.setText('-- FPS')
+            return
+
+        elapsed = self.frame_timestamps[-1] - self.frame_timestamps[0]
+        if elapsed <= 0.0:
+            self.ui.fpsValueLabel.setText('-- FPS')
+            return
+
+        fps = (len(self.frame_timestamps) - 1) / elapsed
+        self.ui.fpsValueLabel.setText(f'{fps:.1f} FPS')
+
     def _show_bgr_frame(self, frame):
         if frame is None or frame.size == 0:
             self._set_placeholder('收到空图像')
@@ -459,11 +496,15 @@ class GUINode(QMainWindow):
             QImage.Format_RGB888,
         ).copy()
         pixmap = QPixmap.fromImage(image)
-        scaled = pixmap.scaled(
-            self.ui.cameraViewLabel.size(),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation,
-        )
+        target_size = self.ui.cameraViewLabel.size()
+        if pixmap.size() == target_size:
+            scaled = pixmap
+        else:
+            scaled = pixmap.scaled(
+                target_size,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation,
+            )
         self.ui.cameraViewLabel.setText('')
         self.ui.cameraViewLabel.setPixmap(scaled)
 
@@ -514,12 +555,34 @@ class GUINode(QMainWindow):
         super().closeEvent(event)
 
 
+def configure_chinese_font(app):
+    preferred_families = (
+        'Noto Sans CJK SC',
+        'Noto Sans CJK',
+        'WenQuanYi Micro Hei',
+        'WenQuanYi Zen Hei',
+        'Source Han Sans SC',
+        'Microsoft YaHei',
+        'SimHei',
+    )
+    installed_families = set(QFontDatabase().families())
+    for family in preferred_families:
+        if family in installed_families:
+            app.setFont(QFont(family, 10))
+            return
+
+    QFont.insertSubstitution('Sans Serif', 'WenQuanYi Micro Hei')
+    QFont.insertSubstitution('Arial', 'WenQuanYi Micro Hei')
+    app.setFont(QFont('Sans Serif', 10))
+
+
 def main(args=None):
     ros_args = args if args is not None else sys.argv
     rclpy.init(args=ros_args)
 
     qt_args = remove_ros_args(args=ros_args)
     app = QApplication(qt_args)
+    configure_chinese_font(app)
 
     window = GUINode(ros_node=None)
     ros_node = Ros2GuiNode(

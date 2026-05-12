@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1360</width>
-    <height>900</height>
+    <width>1445</width>
+    <height>948</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>1180</width>
-    <height>780</height>
+    <width>1160</width>
+    <height>720</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
    <string notr="true">
 QMainWindow, QWidget#centralwidget{
     background-color:#eef5fb;
-    font-family:&quot;Microsoft YaHei&quot;, &quot;Segoe UI&quot;, Arial;
+    font-family:&quot;Noto Sans CJK SC&quot;, &quot;WenQuanYi Micro Hei&quot;, &quot;Microsoft YaHei&quot;, &quot;SimHei&quot;, &quot;Segoe UI&quot;, Arial;
     color:#102a43;
 }
 QFrame#headerFrame{
@@ -40,7 +40,7 @@ QLabel#logoLabel{
 }
 QLabel#titleLabel{
     color:white;
-    font-size:30px;
+    font-size:24px;
     font-weight:700;
 }
 QLabel#subtitleLabel{
@@ -68,7 +68,7 @@ QFrame#cameraPanel, QFrame#rightPanel{
 }
 QLabel.sectionTitle{
     color:#0c3b6e;
-    font-size:20px;
+    font-size:17px;
     font-weight:700;
 }
 QLabel.hintLabel{
@@ -94,6 +94,11 @@ QPushButton#connectArmButton{
     background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #26a8e8, stop:1 #1c55e8);
     min-height:28px;
 }
+QPushButton#stopArmButton{
+    background-color:#d9534f;
+    min-height:28px;
+}
+QPushButton#stopArmButton:hover{ background-color:#c64541; }
 QPushButton#rotateValveButton{
     background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #1fb6ff, stop:1 #6c3cff);
     border-radius:14px;
@@ -125,7 +130,7 @@ QLabel#cameraViewLabel{
     color:#eaf5ff;
     border:2px solid #143b63;
     border-radius:14px;
-    font-size:25px;
+    font-size:22px;
     font-weight:700;
 }
 QFrame.statusCard{
@@ -143,7 +148,7 @@ QLabel.statusIcon{
 }
 QLabel.statusMain{
     color:#073b72;
-    font-size:22px;
+    font-size:18px;
     font-weight:800;
 }
 QLabel.statusSub{
@@ -168,26 +173,26 @@ QLabel.fieldLabel{
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="mainVerticalLayout">
     <property name="spacing">
-     <number>16</number>
+     <number>10</number>
     </property>
     <property name="leftMargin">
-     <number>22</number>
+     <number>14</number>
     </property>
     <property name="topMargin">
-     <number>18</number>
+     <number>10</number>
     </property>
     <property name="rightMargin">
-     <number>22</number>
+     <number>14</number>
     </property>
     <property name="bottomMargin">
-     <number>18</number>
+     <number>10</number>
     </property>
     <item>
      <widget class="QFrame" name="headerFrame">
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>106</height>
+        <height>82</height>
        </size>
       </property>
       <property name="frameShape">
@@ -287,19 +292,19 @@ QLabel.fieldLabel{
        <widget class="QFrame" name="cameraPanel">
         <layout class="QVBoxLayout" name="cameraPanelLayout">
          <property name="spacing">
-          <number>14</number>
+          <number>10</number>
          </property>
          <property name="leftMargin">
-          <number>18</number>
+          <number>14</number>
          </property>
          <property name="topMargin">
-          <number>18</number>
+          <number>14</number>
          </property>
          <property name="rightMargin">
-          <number>18</number>
+          <number>14</number>
          </property>
          <property name="bottomMargin">
-          <number>18</number>
+          <number>14</number>
          </property>
          <item>
           <widget class="QFrame" name="cameraToolbarCard">
@@ -392,10 +397,16 @@ QLabel.fieldLabel{
          </item>
          <item>
           <widget class="QLabel" name="cameraViewLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="minimumSize">
             <size>
-             <width>720</width>
-             <height>430</height>
+             <width>600</width>
+             <height>320</height>
             </size>
            </property>
            <property name="text">
@@ -637,13 +648,13 @@ QLabel.fieldLabel{
        <widget class="QFrame" name="rightPanel">
         <property name="minimumSize">
          <size>
-          <width>445</width>
+          <width>380</width>
           <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>520</width>
+          <width>440</width>
           <height>16777215</height>
          </size>
         </property>
@@ -745,6 +756,13 @@ QLabel.fieldLabel{
              <widget class="QPushButton" name="connectArmButton">
               <property name="text">
                <string>连接机械臂</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="stopArmButton">
+              <property name="text">
+               <string>关闭机械臂</string>
               </property>
              </widget>
             </item>
