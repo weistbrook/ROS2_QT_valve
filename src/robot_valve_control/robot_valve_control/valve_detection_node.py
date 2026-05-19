@@ -6,6 +6,7 @@ import math
 import numpy as np
 import torch
 import yaml
+from collections import deque
 from ultralytics import YOLO
 
 import rclpy
@@ -52,6 +53,12 @@ class ValveDetectionNode(Node):
         self.declare_parameter('plane_roi_shrink_ratio', 0.08)
         self.declare_parameter('plane_debug', True)
         self.declare_parameter('plane_debug_interval_sec', 1.0)
+        self.declare_parameter('target_depth_roi_ratio', 0.08)
+        self.declare_parameter('target_depth_min_roi_px', 9)
+        self.declare_parameter('target_depth_min_points', 12)
+        self.declare_parameter('target_depth_window_m', 0.06)
+        self.declare_parameter('pose_smoothing_window', 5)
+        self.declare_parameter('plane_smoothing_window', 5)
 
         model_path = self.get_parameter('model_path').value
         camera_info_yaml = self.get_parameter('camera_info_yaml').value
@@ -70,6 +77,8 @@ class ValveDetectionNode(Node):
         self.point_cloud = None
         self.camera_info = self.load_camera_info(camera_info_yaml)
         self.last_plane_debug_log_time = 0.0
+        self.position_history = {0: deque(), 1: deque()}
+        self.plane_pose_history = deque()
 
         self.command_pub = self.create_publisher(ValveCommand, command_topic, 10)
         self.vision_pub = self.create_publisher(ValveVision, vision_topic, 10)
@@ -102,6 +111,7 @@ class ValveDetectionNode(Node):
 
             det = self.run_yolo(frame)
             if det is None or len(det) == 0:
+                self.reset_smoothing()
                 self.publish_none_command()
                 self.publish_vision(frame)
                 if self.get_parameter('show_image').value:
@@ -144,6 +154,7 @@ class ValveDetectionNode(Node):
             self.get_logger().warn(f'图像消息发布失败: {e}')
 
     def publish_none_command(self):
+        self.reset_smoothing()
         msg = ValveCommand()
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = 'camera_color_optical_frame'
@@ -210,19 +221,19 @@ class ValveDetectionNode(Node):
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        u = (x1 + x2) / 2.0
-        v = (y1 + y2) / 2.0
-        xyz = self.pixel_to_3d(u, v, self.depth_image, self.camera_info)
+        xyz = self.bbox_to_3d((x1, y1, x2, y2), frame.shape[:2], self.depth_image, self.camera_info)
         if xyz is None:
             return None
+        xyz = self.smooth_xyz(cls, xyz)
 
         plane_pose = None
         if cls == 0:
             plane_pose = self.estimate_plane_pose(frame, (x1, y1, x2, y2))
             if plane_pose is not None:
+                plane_pose = self.smooth_plane_pose(plane_pose)
                 cv2.putText(
                     frame,
-                    f"yaw {plane_pose['yaw_deg']:.1f} pitch {plane_pose['pitch_deg']:.1f}",
+                    f"yaw {plane_pose['yaw_deg']:.1f} pitch {plane_pose['pitch_deg']:.1f} avg",
                     (x1, min(frame.shape[0] - 8, y2 + 20)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
@@ -328,6 +339,54 @@ class ValveDetectionNode(Node):
 
         roi = frame[y1c:y2c, x1c:x2c]
         return dev_angle.judge_proper(roi)
+
+    def reset_smoothing(self):
+        for history in self.position_history.values():
+            history.clear()
+        self.plane_pose_history.clear()
+
+    def smooth_xyz(self, class_id, xyz):
+        window = max(1, int(self.get_parameter('pose_smoothing_window').value))
+        history = self.position_history.setdefault(class_id, deque())
+        history.append(np.asarray(xyz, dtype=np.float32))
+        while len(history) > window:
+            history.popleft()
+
+        smoothed = np.mean(np.stack(list(history), axis=0), axis=0)
+        return float(smoothed[0]), float(smoothed[1]), float(smoothed[2])
+
+    def smooth_plane_pose(self, plane_pose):
+        window = max(1, int(self.get_parameter('plane_smoothing_window').value))
+        self.plane_pose_history.append({
+            'normal': np.asarray(plane_pose['normal'], dtype=np.float32),
+            'yaw_deg': float(plane_pose['yaw_deg']),
+            'pitch_deg': float(plane_pose['pitch_deg']),
+            'inlier_count': int(plane_pose['inlier_count']),
+            'inlier_ratio': float(plane_pose['inlier_ratio']),
+        })
+        while len(self.plane_pose_history) > window:
+            self.plane_pose_history.popleft()
+
+        poses = list(self.plane_pose_history)
+        normal = np.mean(np.stack([pose['normal'] for pose in poses], axis=0), axis=0)
+        normal_norm = np.linalg.norm(normal)
+        if normal_norm > 1e-6:
+            normal = normal / normal_norm
+            if normal[2] < 0.0:
+                normal = -normal
+            yaw_deg, pitch_deg = self.normal_to_yaw_pitch(normal)
+        else:
+            normal = np.asarray(plane_pose['normal'], dtype=np.float32)
+            yaw_deg = float(np.mean([pose['yaw_deg'] for pose in poses]))
+            pitch_deg = float(np.mean([pose['pitch_deg'] for pose in poses]))
+
+        return {
+            'normal': normal,
+            'yaw_deg': float(yaw_deg),
+            'pitch_deg': float(pitch_deg),
+            'inlier_count': int(round(np.mean([pose['inlier_count'] for pose in poses]))),
+            'inlier_ratio': float(np.mean([pose['inlier_ratio'] for pose in poses])),
+        }
 
     def build_command(self, x, y, z, is_small, motion_type, need_rotation, rotation_deg, target):
         msg = ValveCommand()
@@ -668,6 +727,103 @@ class ValveDetectionNode(Node):
         if np.issubdtype(self.depth_image.dtype, np.floating):
             return d
         return d / 1000.0
+
+    def bbox_to_3d(self, bbox, image_shape, depth_img, cam_info_dict):
+        if depth_img is None or cam_info_dict is None:
+            return None
+
+        h, w = image_shape
+        x1, y1, x2, y2 = bbox
+        x1c, x2c = sorted((max(0, int(x1)), min(w, int(x2))))
+        y1c, y2c = sorted((max(0, int(y1)), min(h, int(y2))))
+        if x2c - x1c <= 1 or y2c - y1c <= 1:
+            return None
+
+        cx_color = 0.5 * (x1c + x2c)
+        cy_color = 0.5 * (y1c + y2c)
+        bbox_size = max(1.0, min(float(x2c - x1c), float(y2c - y1c)))
+        ratio = float(self.get_parameter('target_depth_roi_ratio').value)
+        min_roi_px = int(self.get_parameter('target_depth_min_roi_px').value)
+        roi_size = int(round(max(float(min_roi_px), bbox_size * ratio)))
+        roi_size = max(3, roi_size)
+        half = roi_size // 2
+
+        rx1 = max(0, int(round(cx_color)) - half)
+        rx2 = min(w, int(round(cx_color)) + half + 1)
+        ry1 = max(0, int(round(cy_color)) - half)
+        ry2 = min(h, int(round(cy_color)) + half + 1)
+
+        fx = float(cam_info_dict['camera_matrix']['data'][0])
+        fy = float(cam_info_dict['camera_matrix']['data'][4])
+        cam_cx = float(cam_info_dict['camera_matrix']['data'][2])
+        cam_cy = float(cam_info_dict['camera_matrix']['data'][5])
+
+        depth_h, depth_w = depth_img.shape[:2]
+        scale_x = float(depth_w) / float(w)
+        scale_y = float(depth_h) / float(h)
+
+        points = []
+        for v_color in range(ry1, ry2):
+            for u_color in range(rx1, rx2):
+                u_depth = int(round(float(u_color) * scale_x))
+                v_depth = int(round(float(v_color) * scale_y))
+                if u_depth < 0 or u_depth >= depth_w or v_depth < 0 or v_depth >= depth_h:
+                    continue
+
+                d = self.depth_value_to_meters(depth_img[v_depth, u_depth])
+                if d is None:
+                    continue
+
+                u_cam = float(u_color) if depth_w == w else float(u_depth)
+                v_cam = float(v_color) if depth_h == h else float(v_depth)
+                x_m = (u_cam - cam_cx) * d / fx
+                y_m = (v_cam - cam_cy) * d / fy
+                points.append((x_m, y_m, d))
+
+        min_points = int(self.get_parameter('target_depth_min_points').value)
+        if len(points) < min_points:
+            return self.center_pixel_to_3d(cx_color, cy_color, image_shape, depth_img, cam_info_dict)
+
+        points = np.asarray(points, dtype=np.float32)
+        z = points[:, 2]
+        median_z = float(np.median(z))
+        mad = float(np.median(np.abs(z - median_z)))
+        configured_window = float(self.get_parameter('target_depth_window_m').value)
+        adaptive_window = max(configured_window, 3.0 * mad)
+        keep = np.abs(z - median_z) <= adaptive_window
+        points = points[keep]
+
+        if len(points) < min_points:
+            return self.center_pixel_to_3d(cx_color, cy_color, image_shape, depth_img, cam_info_dict)
+
+        xyz = np.median(points, axis=0)
+        return float(xyz[0]), float(xyz[1]), float(xyz[2])
+
+    def center_pixel_to_3d(self, u_color, v_color, image_shape, depth_img, cam_info_dict):
+        h, w = image_shape
+        depth_h, depth_w = depth_img.shape[:2]
+        scale_x = float(depth_w) / float(w)
+        scale_y = float(depth_h) / float(h)
+        u_depth = int(round(float(u_color) * scale_x))
+        v_depth = int(round(float(v_color) * scale_y))
+
+        if u_depth < 0 or u_depth >= depth_w or v_depth < 0 or v_depth >= depth_h:
+            return None
+
+        d = self.depth_value_to_meters(depth_img[v_depth, u_depth])
+        if d is None:
+            return None
+
+        fx = float(cam_info_dict['camera_matrix']['data'][0])
+        fy = float(cam_info_dict['camera_matrix']['data'][4])
+        cx = float(cam_info_dict['camera_matrix']['data'][2])
+        cy = float(cam_info_dict['camera_matrix']['data'][5])
+        u_cam = float(u_color) if depth_w == w else float(u_depth)
+        v_cam = float(v_color) if depth_h == h else float(v_depth)
+        x = (u_cam - cx) * d / fx
+        y = (v_cam - cy) * d / fy
+        z = d
+        return x, y, z
 
     def pixel_to_3d(self, u, v, depth_img, cam_info_dict):
         fx = cam_info_dict['camera_matrix']['data'][0]

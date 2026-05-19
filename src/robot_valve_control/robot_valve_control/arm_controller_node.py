@@ -19,11 +19,14 @@ class ArmControllerNode(Node):
         self.declare_parameter('host', '192.168.0.200')
         self.declare_parameter('port', 2090)
         self.declare_parameter('require_ui_enable', False)
+        self.declare_parameter('plane_alignment_sleep_sec', 3.0)
 
         self.host = self.get_parameter('host').value
         self.port = int(self.get_parameter('port').value)
         self.require_ui_enable = bool(self.get_parameter('require_ui_enable').value)
         self.ui_motion_enabled = not self.require_ui_enable
+        self.plane_alignment_sleep_sec = float(self.get_parameter('plane_alignment_sleep_sec').value)
+        self.plane_alignment_done = False
 
         self.client_socket = None
         self.connected = False
@@ -158,6 +161,7 @@ class ArmControllerNode(Node):
 
         self.ui_motion_enabled = bool(msg.data)
         if self.ui_motion_enabled:
+            self.plane_alignment_done = False
             self.get_logger().info('已收到 UI 一键旋阀使能，开始接受运动指令。')
         else:
             self.get_logger().info('UI 已关闭运动使能，暂停接受运动指令。')
@@ -191,6 +195,9 @@ class ArmControllerNode(Node):
             f"yaw={msg.valve_yaw_deg:.2f}, pitch={msg.valve_pitch_deg:.2f}"
         )
 
+        if not self.execute_plane_alignment_once(msg):
+            return
+
         if msg.need_rotation_correction:
             rotate_cmd = f"Move.Axis 6,{msg.rotation_correction_deg:.3f}"
             resp = self.send_command(rotate_cmd)
@@ -218,6 +225,40 @@ class ArmControllerNode(Node):
 
         resp = self.send_command(move_cmd)
         self.get_logger().info(f"执行移动: {move_cmd} -> {resp}")
+
+    def execute_plane_alignment_once(self, msg):
+        if self.plane_alignment_done:
+            return True
+
+        if not msg.plane_valid:
+            self.get_logger().warn(
+                "Valve plane alignment skipped for this command: plane_valid=False. "
+                "Movement is skipped and will retry on the next valid plane command."
+            )
+            return False
+
+        pitch_cmd_deg = -float(msg.valve_pitch_deg)
+        yaw_cmd_deg = -float(msg.valve_yaw_deg)
+
+        pitch_cmd = f"Move.Axis 4,{pitch_cmd_deg:.3f}"
+        pitch_resp = self.send_command(pitch_cmd)
+        self.get_logger().info(
+            f"Plane pitch alignment: valve_pitch={msg.valve_pitch_deg:.3f}, "
+            f"axis_cmd={pitch_cmd} -> {pitch_resp}"
+        )
+        time.sleep(self.plane_alignment_sleep_sec)
+
+        yaw_cmd = f"Move.Axis 5,{yaw_cmd_deg:.3f}"
+        yaw_resp = self.send_command(yaw_cmd)
+        self.get_logger().info(
+            f"Plane yaw alignment: valve_yaw={msg.valve_yaw_deg:.3f}, "
+            f"axis_cmd={yaw_cmd} -> {yaw_resp}"
+        )
+        time.sleep(self.plane_alignment_sleep_sec)
+
+        self.plane_alignment_done = True
+        self.get_logger().info("Valve plane alignment finished once; later commands will not repeat axis 4/5 alignment.")
+        return True
 
     def close(self):
         self.connected = False

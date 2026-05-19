@@ -125,7 +125,6 @@ class Ui_MainWindow(object):
 "    background-color:#07111d;\n"
 "    color:#eaf5ff;\n"
 "    border:2px solid #143b63;\n"
-"    border-radius:14px;\n"
 "    font-size:22px;\n"
 "    font-weight:700;\n"
 "}\n"

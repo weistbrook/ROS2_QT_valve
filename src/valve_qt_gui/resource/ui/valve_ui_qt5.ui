@@ -129,7 +129,6 @@ QLabel#cameraViewLabel{
     background-color:#07111d;
     color:#eaf5ff;
     border:2px solid #143b63;
-    border-radius:14px;
     font-size:22px;
     font-weight:700;
 }
